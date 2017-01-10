@@ -1,0 +1,233 @@
+# Quickbuildcode2017
+package org.usfirst.frc.team1114.robot;
+
+import edu.wpi.first.wpilibj.IterativeRobot;
+import edu.wpi.first.wpilibj.Joystick;
+import edu.wpi.first.wpilibj.Solenoid;
+import edu.wpi.first.wpilibj.VictorSP;
+import edu.wpi.first.wpilibj.livewindow.LiveWindow;
+
+public class Robot extends IterativeRobot {
+
+	// The Joystick is the controller that the driver holds to actually
+	// operate the robot
+	private Joystick driver;
+
+	// Our victors are used to control the speed of the motor. We pull
+	// from the Joystick and set the value of the motors using the Victor.
+	private VictorSP leftDriveMotor1;
+	private VictorSP leftDriveMotor2;
+	private VictorSP rightDriveMotor1;
+	private VictorSP rightDriveMotor2;
+
+	// The Solenoids are used to control airflow. We use them to switch
+	// between Low Gear and High Gear
+	private Solenoid lowGear;
+	private Solenoid highGear;
+
+	// This variable is used for us to keep track of when our Auton period started.
+	// This is used for determining time based events & when to stop
+	private long autonStartTime;
+
+	// The autonMode keeps track of which Auton mode we actually want to run.
+	// This is used to allow us to have multiple sets of code that we can run
+	// in our Auton mode
+	private int autonMode = 0;
+
+	// This variable is simply a quick reference so we know how many difference
+	// modes exist
+	private final int NUM_MODES = 2;
+
+	@Override
+	/**
+	 * The pins in the class constructors point to the pins on the RoboRio
+	 */
+	public void robotInit() {
+		this.driver = new Joystick(0);
+
+		this.leftDriveMotor1 	= new VictorSP(0);
+		this.leftDriveMotor2 	= new VictorSP(1);
+		this.rightDriveMotor1 	= new VictorSP(2);
+		this.rightDriveMotor2 	= new VictorSP(3);
+
+		this.lowGear 	= new Solenoid(0);
+		this.highGear 	= new Solenoid(1);
+	}
+
+	@Override
+	/**
+	 * disabledInit is a function that gets called once the second
+	 * that the disabled period beings. It is not called again during
+	 * the cycle.
+	 */
+	public void disabledInit() {
+		// Unimpleented -> There is nothing that we want to do when we first disable
+	}
+
+	@Override
+	/**
+	 * This function is called periodically (20 MS) during disabled
+	 */
+	public void disabledPeriodic() {
+
+		// This is used to handle which Autonomous period we want to use.
+		// We can switch this value using any button on the controller
+		// depending on how we have it setup. Note that any controls setup
+		// in disabled will NOT override the Teleop counterparts.
+		if (this.driver.getRawButton(5)) {
+			this.autonMode = 1;
+			System.out.println("Auto mode: 0");
+			System.out.println("Description: Drive forward 3 seconds");
+		} else if (this.driver.getRawButton(6)) {
+			this.autonMode = 2;
+			System.out.println("Auto mode: 1");
+			System.out.println("Description: Drive forward 3 seconds, Turn left 2 seconds");
+		}
+	}
+
+	@Override
+	/**
+	 * autonomousInit is a function that gets called once the second
+	 * that the autonomous period beings. It is not called again during
+	 * the cycle.
+	 */
+	public void autonomousInit() {
+
+		// Set the start time before we continue with any Auton activities
+		this.autonStartTime = System.currentTimeMillis();
+	}
+
+	/**
+	 * This function is called periodically (20 MS) during autonomous
+	 */
+	@Override
+	public void autonomousPeriodic() {
+
+		// Determine how long we have been in Auton. We do this by
+		// comparing the current millisecond time to the one defined
+		// in the autonomouseInit function
+		long autonTimeElapsed = System.currentTimeMillis() - this.autonStartTime;
+
+		// This is where we use the autonMode switch to determine what we
+		// we want to do. The autonMode will switch based on the value
+		if (this.autonMode == 0) {
+
+			// For the first 3 second of our Auton period we want to move forward
+			// with the motors at 30% of their maximum capacity.
+			// After the first three seconds have elapsed we turn our motors back
+			// off to prevent from moving further foward.
+			// This Auton will effectively leave us in the middle of the field and earn
+			// 5 points
+			if (autonTimeElapsed < 3000) {
+				this.leftDriveMotor1.set(-0.3);
+				this.leftDriveMotor2.set(-0.3);
+				this.rightDriveMotor1.set(0.3);
+				this.rightDriveMotor2.set(0.3);
+			} else {
+				this.leftDriveMotor1.set(0);
+				this.leftDriveMotor2.set(0);
+				this.rightDriveMotor1.set(0);
+				this.rightDriveMotor2.set(0);
+			}
+		} else if (this.autonMode == 1) {
+
+			// For the first 3 seconds of our Auton period we want to move forward
+			// with the motors at 30% of their maxium capacity.
+			// For the next 2 seconds we want to turn in place
+			// After 5 seconds we are going to turn all of the motors off so that
+			// the robot stops moving
+			if (autonTimeElapsed < 3000) {
+				this.leftDriveMotor1.set(-0.3);
+				this.leftDriveMotor2.set(-0.3);
+				this.rightDriveMotor1.set(0.3);
+				this.rightDriveMotor2.set(0.3);
+			} else if (autonTimeElapsed > 3000 && autonTimeElapsed < 5000) {
+				this.leftDriveMotor1.set(0.3);
+				this.leftDriveMotor2.set(0.3);
+				this.rightDriveMotor1.set(0.3);
+				this.rightDriveMotor2.set(0.3);
+			} else {
+				this.leftDriveMotor1.set(0);
+				this.leftDriveMotor2.set(0);
+				this.rightDriveMotor1.set(0);
+				this.rightDriveMotor2.set(0);
+			}
+		} else {
+
+			// This autonomous mode is used to do nothing.
+		}
+	}
+
+	@Override
+	/**
+	 * teleopInit is a function that gets called once the second
+	 * that the teleop period beings. It is not called again during
+	 * the cycle.
+	 */
+	public void teleopInit() {
+		// Unimpleented -> There is nothing that we want to do when we first enable
+	}
+
+	@Override
+	/**
+	 * This function is called periodically (every 20ms) during operator control
+	 * This function handles ALL of the controls during the teleoperated
+	 * period. It's primary function is to grab input from the controller
+	 * and then output the values from the input to the motors
+	 *
+	 * Note that the value of the joysticks can be found in the driverstation.
+	 * When you are working with the USB controller, triggering an input
+	 * change on the controller will make it VERY obvious what you are currently
+	 * working with.
+	 */
+	public void teleopPeriodic() {
+
+		/* Variable declaration */
+
+		// Get the current Input value from the x axis on the joystick
+		// We invert the value of this because the joysticks follow a flight
+		// simulator-esque system where pushing up is -1 and pulling down is 1
+		double leftJoystickInputValue 	= -this.driver.getRawAxis(0);
+		double rightJoystickInputValue 	= -this.driver.getRawAxis(1);
+
+		// Determine the output from the joint values of both of our controllers.
+		// This allows both sides of the robot to move in unison.
+		double leftMotorOut 	= leftJoystickInputValue + rightJoystickInputValue;
+		double rightMotorOut 	= leftJoystickInputValue - rightJoystickInputValue;
+
+		// Get the current input value for the left and right bumper buttons
+		// on the joystick
+		boolean leftJoystickButtonValue 	= this.driver.getRawButton(5);
+		boolean rightJoystickButtonValue 	= this.driver.getRawButton(6);
+
+		/* Motor Changes */
+
+		// Set the left drive motor to the value that we just pulled from the joystick
+		this.leftDriveMotor1.set(leftMotorOut);
+		this.leftDriveMotor2.set(leftMotorOut);
+		this.rightDriveMotor1.set(rightMotorOut);
+		this.rightDriveMotor2.set(rightMotorOut);
+
+		/* Gear Changes */
+
+		// Change the robot to drive in it's "low" gear
+		if (leftJoystickButtonValue) {
+			this.lowGear.set(true);
+			this.highGear.set(false);
+		}
+
+		// Change the robot to drive in it's "high" gear
+		if (rightJoystickButtonValue) {
+			this.lowGear.set(false);
+			this.highGear.set(true);
+		}
+	}
+
+	/**
+	 * This function is called periodically during test mode
+	 */
+	@Override
+	public void testPeriodic() {
+		LiveWindow.run();
+	}
+}
